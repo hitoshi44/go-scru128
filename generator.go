@@ -3,6 +3,7 @@ package scru128
 import (
 	"bufio"
 	"crypto/rand"
+	"errors"
 	"io"
 	"sync"
 	"time"
@@ -38,7 +39,7 @@ type Generator struct {
 // an important issue, check out the following benchmark tests and pass
 // bufio.NewReader(rand.Reader) to NewGeneratorWithRng():
 //
-//     go test -bench Generator
+//	go test -bench Generator
 func NewGenerator() *Generator {
 	// use small buffer by default to avoid both occasional unbearable performance
 	// degradation and waste of time and space for unused buffer contents
@@ -69,11 +70,11 @@ func (g *Generator) Generate() (id Id, err error) {
 // should be protected from concurrent accesses using a mutex or other
 // synchronization mechanism to avoid race conditions.
 //
-// This method panics if the argument is not a 48-bit positive integer and
-// returns non-nil err if the random number generator fails.
+// This method returns non-nil err if the argument is not a 48-bit positive integer
+// and if the random number generator fails.
 func (g *Generator) GenerateCore(timestamp uint64) (id Id, err error) {
 	if timestamp == 0 || timestamp > maxTimestamp {
-		panic("`timestamp` must be a 48-bit positive integer")
+		return Id{}, errors.New("`timestamp` must be a 48-bit positive integer")
 	}
 
 	var n uint32
@@ -129,7 +130,7 @@ func (g *Generator) GenerateCore(timestamp uint64) (id Id, err error) {
 	if err != nil {
 		goto Error
 	}
-	return FromFields(g.timestamp, g.counterHi, g.counterLo, n), nil
+	return FromFields(g.timestamp, g.counterHi, g.counterLo, n)
 
 Error:
 	g.lastStatus = GeneratorStatusError

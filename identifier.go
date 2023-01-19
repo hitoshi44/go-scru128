@@ -10,17 +10,17 @@ type Id [16]byte
 
 // Creates a SCRU128 ID object from field values.
 //
-// This function panics if any argument is out of the value range of the field.
+// This function retunrs error if any argument is out of the value range of the field.
 func FromFields(
 	timestamp uint64,
 	counterHi uint32,
 	counterLo uint32,
 	entropy uint32,
-) Id {
+) (Id, error) {
 	if timestamp > maxTimestamp ||
 		counterHi > maxCounterHi ||
 		counterLo > maxCounterLo {
-		panic("invalid field value")
+		return Id{}, errors.New("invalid field value")
 	}
 
 	return Id{
@@ -40,7 +40,7 @@ func FromFields(
 		byte(entropy >> 16),
 		byte(entropy >> 8),
 		byte(entropy),
-	}
+	}, nil
 }
 
 // Creates a SCRU128 ID object from a 25-digit string representation.

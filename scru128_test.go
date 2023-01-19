@@ -13,7 +13,7 @@ var samples = make([]string, 100_000)
 
 func init() {
 	for i := range samples {
-		samples[i] = NewString()
+		samples[i], _ = NewString()
 	}
 }
 
@@ -78,15 +78,19 @@ func TestTimestampAndCounters(t *testing.T) {
 
 // Generates no IDs sharing same timestamp and counters under multithreading
 func TestThreading(t *testing.T) {
-	results := make(chan Id, 4*10_000)
-
+	type Result struct {
+		Id  Id
+		err error
+	}
+	results := make(chan Result, 4*10_000)
 	group := new(sync.WaitGroup)
 	for i := 0; i < 4; i++ {
 		group.Add(1)
 		go func() {
 			defer group.Done()
 			for i := 0; i < 10_000; i++ {
-				results <- New()
+				id, err := New()
+				results <- Result{id, err}
 			}
 		}()
 	}
@@ -95,7 +99,11 @@ func TestThreading(t *testing.T) {
 	go func() {
 		defer close(done)
 		set := make(map[string]struct{}, 4*10_000)
-		for e := range results {
+		for result := range results {
+			if result.err != nil {
+				t.Fail()
+			}
+			e := result.Id
 			set[fmt.Sprintf("%012x-%06x-%06x", e.Timestamp(), e.CounterHi(), e.CounterLo())] = struct{}{}
 		}
 		if len(set) != 4*10_000 {

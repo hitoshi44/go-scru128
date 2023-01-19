@@ -27,22 +27,22 @@ const maxCounterLo uint32 = 0xff_ffff
 
 var defaultGenerator = NewGenerator()
 
-// Generates a new SCRU128 ID object, or panics if crypto/rand fails.
+// Generates a new SCRU128 ID object, return error when crypto/rand fails.
 //
 // This function is thread-safe; multiple threads can call it concurrently.
-func New() Id {
-	id, err := defaultGenerator.Generate()
-	if err != nil {
-		panic(err)
-	}
-	return id
+func New() (Id, error) {
+	return defaultGenerator.Generate()
 }
 
 // Generates a new SCRU128 ID encoded in the 26-digit canonical string
-// representation, or panics if crypto/rand fails.
+// representation, return error when crypto/rand fails.
 //
 // This function is thread-safe. Use this to quickly get a new SCRU128 ID as a
 // string.
-func NewString() string {
-	return New().String()
+func NewString() (string, error) {
+	id, err := New()
+	if err != nil {
+		return "", err
+	}
+	return id.String(), nil
 }

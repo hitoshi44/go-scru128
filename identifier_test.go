@@ -36,9 +36,13 @@ func TestEncodeDecode(t *testing.T) {
 
 	for _, e := range cases {
 		var fromFields, fromString Id
-		fromFields = FromFields(
+		fromFields, err := FromFields(
 			e.timestamp, e.counterHi, e.counterLo, e.entropy,
 		)
+		if err != nil {
+			t.Fail()
+		}
+
 		fromString, _ = Parse(e.string)
 
 		caseStringAsBigInt, _ := new(big.Int).SetString(e.string, 36)
@@ -90,13 +94,19 @@ func TestStringValidation(t *testing.T) {
 
 // Has symmetric converters from/to various values
 func TestSymmetricConverters(t *testing.T) {
+	unwrapId := func(id Id, err error) Id {
+		if err != nil {
+			t.Fail()
+		}
+		return id
+	}
 	cases := []Id{
-		FromFields(0, 0, 0, 0),
-		FromFields(maxUint48, 0, 0, 0),
-		FromFields(0, maxUint24, 0, 0),
-		FromFields(0, 0, maxUint24, 0),
-		FromFields(0, 0, 0, maxUint32),
-		FromFields(maxUint48, maxUint24, maxUint24, maxUint32),
+		unwrapId(FromFields(0, 0, 0, 0)),
+		unwrapId(FromFields(maxUint48, 0, 0, 0)),
+		unwrapId(FromFields(0, maxUint24, 0, 0)),
+		unwrapId(FromFields(0, 0, maxUint24, 0)),
+		unwrapId(FromFields(0, 0, 0, maxUint32)),
+		unwrapId(FromFields(maxUint48, maxUint24, maxUint24, maxUint32)),
 	}
 
 	g := NewGenerator()
@@ -109,9 +119,9 @@ func TestSymmetricConverters(t *testing.T) {
 		if x, _ := Parse(e.String()); x != e {
 			t.Fail()
 		}
-		if FromFields(
+		if unwrapId(FromFields(
 			e.Timestamp(), e.CounterHi(), e.CounterLo(), e.Entropy(),
-		) != e {
+		)) != e {
 			t.Fail()
 		}
 
@@ -133,16 +143,22 @@ func TestSymmetricConverters(t *testing.T) {
 
 // Supports comparison methods
 func TestComparisonMethods(t *testing.T) {
+	unwrapId := func(id Id, err error) Id {
+		if err != nil {
+			t.Fail()
+		}
+		return id
+	}
 	ordered := []Id{
-		FromFields(0, 0, 0, 0),
-		FromFields(0, 0, 0, 1),
-		FromFields(0, 0, 0, maxUint32),
-		FromFields(0, 0, 1, 0),
-		FromFields(0, 0, maxUint24, 0),
-		FromFields(0, 1, 0, 0),
-		FromFields(0, maxUint24, 0, 0),
-		FromFields(1, 0, 0, 0),
-		FromFields(2, 0, 0, 0),
+		unwrapId(FromFields(0, 0, 0, 0)),
+		unwrapId(FromFields(0, 0, 0, 1)),
+		unwrapId(FromFields(0, 0, 0, maxUint32)),
+		unwrapId(FromFields(0, 0, 1, 0)),
+		unwrapId(FromFields(0, 0, maxUint24, 0)),
+		unwrapId(FromFields(0, 1, 0, 0)),
+		unwrapId(FromFields(0, maxUint24, 0, 0)),
+		unwrapId(FromFields(1, 0, 0, 0)),
+		unwrapId(FromFields(2, 0, 0, 0)),
 	}
 
 	g := NewGenerator()
